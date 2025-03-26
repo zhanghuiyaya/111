@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>衣橱自然拼读</title>
+    <style>
+        :root {
+            --vowel: #FF6B6B;    /* 元音 */
+            --consonant: #4CC9F0; /* 辅音 */
+            --special: #9368E9;   /* 特殊发音 */
+            --silent: #AAAAAA;   /* 不发音字母 */
+        }
+        body {
+            font-family: 'Comic Sans MS', cursive;
+            background: #FFF5E6;
+            margin: 0;
+            touch-action: manipulation;
+            text-align: center;
+        }
+        .word-container {
+            background: white;
+            border-radius: 20px;
+            width: 90%;
+            margin: 20px auto;
+            padding: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        .word-emoji {
+            font-size: 80px;
+            margin: 10px;
+        }
+        .phonics-row {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .sound-block {
+            margin: 5px;
+            min-width: 60px;
+        }
+        .letter {
+            font-size: 28px;
+            font-weight: bold;
+            padding: 10px;
+            border-radius: 10px;
+            color: white;
+        }
+        .sound {
+            font-size: 14px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .controls {
+            margin: 20px;
+        }
+        .ctrl-btn {
+            background: #FF9F43;
+            border: none;
+            border-radius: 50px;
+            padding: 12px 25px;
+            font-size: 18px;
+            color: white;
+            margin: 0 10px;
+            cursor: pointer;
+        }
+        @keyframes highlight {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        .active {
+            animation: highlight 0.5s ease;
+        }
+        .progress {
+            margin: 15px auto;
+            width: 80%;
+            height: 10px;
+            background: #EEEEEE;
+            border-radius: 5px;
+        }
+        .progress-bar {
+            height: 100%;
+            background: #4CC9F0;
+            border-radius: 5px;
+            width: 0%;
+            transition: width 0.5s;
+        }
+    </style>
+</head>
+<body>
+    <div class="word-container">
+        <div class="word-emoji" id="emoji">🧢</div>
+        <div class="phonics-row" id="phonicsRow"></div>
+        <div class="progress">
+            <div class="progress-bar" id="progressBar"></div>
+        </div>
+    </div>
+    
+    <div class="controls">
+        <button class="ctrl-btn" onclick="speakWord()">🔊 读单词</button>
+        <button class="ctrl-btn" onclick="spellSoundBySound()">👂 拼读</button>
+        <button class="ctrl-btn" onclick="nextWord()">➡️ 下一个</button>
+    </div>
+
+    <script>
+        // 完整10个单词的自然拼读配置
+        const phonicsWords = [
+            { // cap
+                word: "cap", emoji: "🧢",
+                sounds: [
+                    {letters: "c", sound: "k", type: "consonant"},
+                    {letters: "a", sound: "æ", type: "vowel"},
+                    {letters: "p", sound: "p", type: "consonant"}
+                ]
+            },
+            { // sweater
+                word: "sweater", emoji: "🧥",
+                sounds: [
+                    {letters: "s", sound: "s", type: "consonant"},
+                    {letters: "w", sound: "w", type: "consonant"},
+                    {letters: "ea", sound: "e", type: "vowel"},
+                    {letters: "t", sound: "t", type: "consonant"},
+                    {letters: "er", sound: "ər", type: "special"}
+                ]
+            },
+            { // pants
+                word: "pants", emoji: "👖",
+                sounds: [
+                    {letters: "p", sound: "p", type: "consonant"},
+                    {letters: "a", sound: "æ", type: "vowel"},
+                    {letters: "n", sound: "n", type: "consonant"},
+                    {letters: "t", sound: "t", type: "consonant"},
+                    {letters: "s", sound: "s", type: "consonant"}
+                ]
+            },
+            { // skirt
+                word: "skirt", emoji: "👗",
+                sounds: [
+                    {letters: "s", sound: "s", type: "consonant"},
+                    {letters: "k", sound: "k", type: "consonant"},
+                    {letters: "ir", sound: "ɜː", type: "special"},
+                    {letters: "t", sound: "t", type: "consonant"}
+                ]
+            },
+            { // dress
+                word: "dress", emoji: "👗",
+                sounds: [
+                    {letters: "d", sound: "d", type: "consonant"},
+                    {letters: "r", sound: "r", type: "consonant"},
+                    {letters: "e", sound: "e", type: "vowel"},
+                    {letters: "ss", sound: "s", type: "consonant"}
+                ]
+            },
+            { // shorts
+                word: "shorts", emoji: "🩳",
+                sounds: [
+                    {letters: "sh", sound: "ʃ", type: "special"},
+                    {letters: "or", sound: "ɔː", type: "special"},
+                    {letters: "t", sound: "t", type: "consonant"},
+                    {letters: "s", sound: "s", type: "consonant"}
+                ]
+            },
+            { // t-shirt
+                word: "t-shirt", emoji: "👕",
+                sounds: [
+                    {letters: "t", sound: "t", type: "consonant"},
+                    {letters: "-", sound: "", type: "silent"},
+                    {letters: "sh", sound: "ʃ", type: "special"},
+                    {letters: "ir", sound: "ɜː", type: "special"},
+                    {letters: "t", sound: "t", type: "consonant"}
+                ]
+            },
+            { // shoes
+                word: "shoes", emoji: "👟",
+                sounds: [
+                    {letters: "sh", sound: "ʃ", type: "special"},
+                    {letters: "oe", sound: "uː", type: "vowel"},
+                    {letters: "s", sound: "z", type: "consonant"}
+                ]
+            },
+            { // socks
+                word: "socks", emoji: "🧦",
+                sounds: [
+                    {letters: "s", sound: "s", type: "consonant"},
+                    {letters: "o", sound: "ɒ", type: "vowel"},
+                    {letters: "ck", sound: "k", type: "consonant"},
+                    {letters: "s", sound: "s", type: "consonant"}
+                ]
+            }
+        ];
+
+        let currentWordIndex = 0;
+        const synth = window.speechSynthesis;
+
+        function init() {
+            renderWord();
+            updateProgress();
+        }
+
+        function renderWord() {
+            const word = phonicsWords[currentWordIndex];
+            document.getElementById("emoji").textContent = word.emoji;
+            
+            const row = document.getElementById("phonicsRow");
+            row.innerHTML = "";
+            
+            word.sounds.forEach(sound => {
+                const block = document.createElement("div");
+                block.className = "sound-block";
+                
+                const letter = document.createElement("div");
+                letter.className = "letter";
+                letter.textContent = sound.letters;
+                letter.style.background = getColor(sound.type);
+                letter.onclick = () => playSound(sound.sound, letter);
+                
+                const soundLabel = document.createElement("div");
+                soundLabel.className = "sound";
+                soundLabel.textContent = sound.sound ? `/${sound.sound}/` : "(不发音)";
+                
+                block.appendChild(letter);
+                block.appendChild(soundLabel);
+                row.appendChild(block);
+            });
+        }
+
+        function getColor(type) {
+            switch(type) {
+                case "vowel": return "var(--vowel)";
+                case "special": return "var(--special)";
+                case "silent": return "var(--silent)";
+                default: return "var(--consonant)";
+            }
+        }
+
+        function playSound(sound, element) {
+            if(!sound) return;
+            
+            element.classList.add("active");
+            setTimeout(() => element.classList.remove("active"), 500);
+            
+            const utterance = new SpeechSynthesisUtterance();
+            utterance.text = sound;
+            utterance.rate = 0.7;
+            synth.speak(utterance);
+        }
+
+        function speakWord() {
+            const utterance = new SpeechSynthesisUtterance(phonicsWords[currentWordIndex].word);
+            utterance.rate = 0.8;
+            synth.speak(utterance);
+        }
+
+        function spellSoundBySound() {
+            const sounds = phonicsWords[currentWordIndex].sounds;
+            let delay = 0;
+            
+            sounds.forEach(sound => {
+                if(sound.sound) {
+                    setTimeout(() => {
+                        const elements = document.querySelectorAll(".letter");
+                        elements.forEach(el => {
+                            if(el.textContent === sound.letters) {
+                                playSound(sound.sound, el);
+                            }
+                        });
+                    }, delay);
+                    delay += 800;
+                }
+            });
+            
+            setTimeout(speakWord, delay + 300);
+        }
+
+        function nextWord() {
+            currentWordIndex = (currentWordIndex + 1) % phonicsWords.length;
+            renderWord();
+            updateProgress();
+            
+            if(currentWordIndex === 0) {
+                setTimeout(() => alert("太棒了！所有单词都学完啦！🎉"), 500);
+            }
+        }
+
+        function updateProgress() {
+            const percent = ((currentWordIndex + 1) / phonicsWords.length) * 100;
+            document.getElementById("progressBar").style.width = `${percent}%`;
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
