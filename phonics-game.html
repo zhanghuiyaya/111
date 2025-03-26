@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>快乐自然拼读</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', cursive;
+            background: #FFF5E6;
+            margin: 0;
+            padding: 20px;
+            touch-action: manipulation;
+            overflow-x: hidden;
+        }
+        
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .phonics-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .word-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 15px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            width: 80%;
+            text-align: center;
+            position: relative;
+        }
+        
+        .word-image {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+        
+        .word-display {
+            font-size: 48px;
+            color: #FF6B6B;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .letter {
+            position: relative;
+            margin: 0 5px;
+            transition: all 0.3s;
+        }
+        
+        .letter.highlight {
+            color: #4CAF50;
+            transform: scale(1.2);
+        }
+        
+        .letter.sound-highlight {
+            color: #2196F3;
+            transform: scale(1.3);
+        }
+        
+        .phonics-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+        
+        .phonics-btn {
+            background: #FFD166;
+            border: none;
+            border-radius: 50%;
+            width: 60px;
+            height: 60px;
+            margin: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            color: white;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        
+        .phonics-btn:hover {
+            transform: scale(1.1);
+        }
+        
+        .sound-btn {
+            background: #06D6A0;
+            width: 80px;
+            height: 80px;
+            font-size: 30px;
+        }
+        
+        .progress-container {
+            width: 80%;
+            margin: 20px auto;
+            text-align: center;
+        }
+        
+        .progress-bar {
+            height: 20px;
+            background: #E0E0E0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .progress {
+            height: 100%;
+            background: #4CC9F0;
+            width: 0%;
+            transition: width 0.5s;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .bounce {
+            animation: bounce 1s infinite;
+        }
+        
+        .sound-wave {
+            position: absolute;
+            bottom: -10px;
+            left: 0;
+            width: 100%;
+            height: 20px;
+            background: url('data:image/svg+xml;utf8,<svg viewBox="0 0 100 20" xmlns="http://www.w3.org/2000/svg"><path d="M0,10 Q25,20 50,10 T100,10" fill="none" stroke="%2306D6A0" stroke-width="2"/></svg>') repeat-x;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .sound-wave.active {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 style="color: #EF476F;">快乐自然拼读</h1>
+    </div>
+    
+    <div class="phonics-container">
+        <div class="word-card">
+            <div class="word-image" id="wordImage">🧢</div>
+            <div class="word-display" id="wordDisplay"></div>
+            <div class="sound-wave" id="soundWave"></div>
+            <div class="phonics-buttons">
+                <button class="phonics-btn sound-btn" onclick="playWordSound()">🔊</button>
+                <button class="phonics-btn" onclick="playLetterSound(0)">C</button>
+                <button class="phonics-btn" onclick="playLetterSound(1)">A</button>
+                <button class="phonics-btn" onclick="playLetterSound(2)">P</button>
+            </div>
+        </div>
+        
+        <div class="progress-container">
+            <div>学习进度</div>
+            <div class="progress-bar">
+                <div class="progress" id="progressBar"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const words = [
+            {word: "cap", emoji: "🧢", letters: [
+                {char: "C", sound: "k", example: "cat"},
+                {char: "A", sound: "æ", example: "apple"},
+                {char: "P", sound: "p", example: "pig"}
+            ]},
+            {word: "sock", emoji: "🧦", letters: [
+                {char: "S", sound: "s", example: "sun"},
+                {char: "O", sound: "ɒ", example: "octopus"},
+                {char: "C", sound: "k", example: "cat"},
+                {char: "K", sound: "k", example: "kite"}
+            ]},
+            {word: "shoe", emoji: "👟", letters: [
+                {char: "S", sound: "ʃ", example: "ship"},
+                {char: "H", sound: "h", example: "hat"},
+                {char: "O", sound: "uː", example: "moon"},
+                {char: "E", sound: "silent", example: ""}
+            ]},
+            {word: "hat", emoji: "🧢", letters: [
+                {char: "H", sound: "h", example: "house"},
+                {char: "A", sound: "æ", example: "ant"},
+                {char: "T", sound: "t", example: "tiger"}
+            ]},
+            {word: "dress", emoji: "👗", letters: [
+                {char: "D", sound: "d", example: "dog"},
+                {char: "R", sound: "r", example: "rabbit"},
+                {char: "E", sound: "e", example: "egg"},
+                {char: "S", sound: "s", example: "snake"},
+                {char: "S", sound: "s", example: "sun"}
+            ]}
+        ];
+
+        let currentWordIndex = 0;
+        const synth = window.speechSynthesis;
+        let currentLetters = [];
+        
+        function init() {
+            loadWord(currentWordIndex);
+            updateProgress();
+        }
+        
+        function loadWord(index) {
+            const wordObj = words[index];
+            document.getElementById("wordImage").textContent = wordObj.emoji;
+            
+            const wordDisplay = document.getElementById("wordDisplay");
+            wordDisplay.innerHTML = "";
+            
+            currentLetters = wordObj.letters;
+            
+            wordObj.letters.forEach((letter, i) => {
+                const letterSpan = document.createElement("span");
+                letterSpan.className = "letter";
+                letterSpan.textContent = letter.char;
+                letterSpan.dataset.index = i;
+                wordDisplay.appendChild(letterSpan);
+            });
+        }
+        
+        function playWordSound() {
+            const wordObj = words[currentWordIndex];
+            const utterance = new SpeechSynthesisUtterance(wordObj.word);
+            utterance.rate = 0.8;
+            
+            // 显示声波动画
+            const soundWave = document.getElementById("soundWave");
+            soundWave.classList.add("active");
+            setTimeout(() => soundWave.classList.remove("active"), 1000);
+            
+            synth.speak(utterance);
+        }
+        
+        function playLetterSound(index) {
+            const letterObj = currentLetters[index];
+            const letters = document.querySelectorAll(".letter");
+            
+            // 高亮显示当前字母
+            letters.forEach((letter, i) => {
+                letter.classList.remove("highlight", "sound-highlight");
+                if(i === index) {
+                    letter.classList.add("sound-highlight");
+                }
+            });
+            
+            // 播放字母发音
+            let speechText = `${letterObj.char} 发 ${letterObj.sound} 音，比如 ${letterObj.example || "不发音"}`;
+            if(letterObj.sound === "silent") {
+                speechText = `${letterObj.char} 在这里不发音`;
+            }
+            
+            const utterance = new SpeechSynthesisUtterance(speechText);
+            utterance.rate = 0.7;
+            
+            // 字母发音后显示高亮
+            utterance.onend = function() {
+                letters[index].classList.add("highlight");
+                setTimeout(() => {
+                    letters[index].classList.remove("highlight", "sound-highlight");
+                }, 2000);
+            };
+            
+            synth.speak(utterance);
+        }
+        
+        function updateProgress() {
+            const progress = ((currentWordIndex + 1) / words.length) * 100;
+            document.getElementById("progressBar").style.width = `${progress}%`;
+        }
+        
+        function nextWord() {
+            currentWordIndex = (currentWordIndex + 1) % words.length;
+            loadWord(currentWordIndex);
+            updateProgress();
+            
+            if(currentWordIndex === 0) {
+                setTimeout(() => {
+                    alert("太棒了！你已经学会了所有单词！🎉");
+                }, 500);
+            }
+        }
+        
+        // 初始化
+        window.onload = init;
+    </script>
+</body>
+</html>
