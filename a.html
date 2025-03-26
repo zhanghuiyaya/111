@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>魔法衣橱大冒险</title>
+    <style>
+        :root {
+            --main-color: #FF9F43;
+            --bg-color: #FDE8E0;
+        }
+
+        body {
+            font-family: 'Comic Sans MS', cursive;
+            background: var(--bg-color);
+            margin: 0;
+            touch-action: manipulation;
+            overflow: hidden;
+        }
+
+        .game-container {
+            display: flex;
+            height: 100vh;
+            padding: 20px;
+            box-sizing: border-box;
+            flex-direction: column;
+        }
+
+        .word-card {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            margin: 15px auto;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            width: 80%;
+            text-align: center;
+            position: relative;
+        }
+
+        .word-image {
+            font-size: 80px;
+            margin-bottom: 20px;
+        }
+
+        .letter-bubble {
+            display: inline-block;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            text-align: center;
+            background: var(--main-color);
+            color: white;
+            border-radius: 50%;
+            margin: 8px;
+            font-size: 24px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        @keyframes celebrate {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+
+        .celebrate {
+            animation: celebrate 0.5s ease 3;
+        }
+
+        .progress-container {
+            width: 80%;
+            margin: 10px auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div class="word-card" id="wordCard">
+            <div class="word-image" id="wordImage">🧢</div>
+            <div id="letterContainer"></div>
+        </div>
+        <div class="progress-container">
+            <div>学习进度: <span id="progressText">1/5</span></div>
+        </div>
+    </div>
+
+    <script>
+        const words = [
+            {word: "cap", emoji: "🧢", letters: ["C","A","P"]},
+            {word: "sock", emoji: "🧦", letters: ["S","O","C","K"]},
+            {word: "shoe", emoji: "👟", letters: ["S","H","O","E"]},
+            {word: "hat", emoji: "🧢", letters: ["H","A","T"]},
+            {word: "dress", emoji: "👗", letters: ["D","R","E","S","S"]}
+        ];
+
+        let currentWordIndex = 0;
+        const synth = window.speechSynthesis;
+        let remainingLetters = [];
+
+        function initGame() {
+            loadWord(currentWordIndex);
+        }
+
+        function loadWord(index) {
+            const wordObj = words[index];
+            document.getElementById("wordImage").textContent = wordObj.emoji;
+            document.getElementById("progressText").textContent = `${index+1}/${words.length}`;
+            
+            remainingLetters = [...wordObj.letters];
+            renderLetters();
+            
+            // 自动朗读单词
+            setTimeout(() => {
+                speakWord(wordObj.word);
+            }, 500);
+        }
+
+        function renderLetters() {
+            const container = document.getElementById("letterContainer");
+            container.innerHTML = "";
+            
+            remainingLetters.forEach((letter, i) => {
+                const bubble = document.createElement("div");
+                bubble.className = "letter-bubble";
+                bubble.textContent = letter;
+                bubble.addEventListener("click", () => handleLetterClick(letter, bubble));
+                container.appendChild(bubble);
+            });
+        }
+
+        function handleLetterClick(letter, bubble) {
+            // 播放字母发音
+            speakLetter(letter);
+            
+            // 动画效果
+            bubble.classList.add("celebrate");
+            setTimeout(() => {
+                bubble.classList.remove("celebrate");
+                
+                // 移除已点击字母
+                const index = remainingLetters.indexOf(letter);
+                if (index > -1) {
+                    remainingLetters.splice(index, 1);
+                    renderLetters();
+                    
+                    // 检查是否完成当前单词
+                    if (remainingLetters.length === 0) {
+                        completeCurrentWord();
+                    }
+                }
+            }, 500);
+        }
+
+        function completeCurrentWord() {
+            // 庆祝效果
+            document.getElementById("wordCard").classList.add("celebrate");
+            
+            // 1秒后跳转下一个单词
+            setTimeout(() => {
+                document.getElementById("wordCard").classList.remove("celebrate");
+                currentWordIndex++;
+                
+                if (currentWordIndex < words.length) {
+                    loadWord(currentWordIndex);
+                } else {
+                    // 全部完成
+                    alert("太棒了！你已经学会了所有单词！🎉");
+                    currentWordIndex = 0;
+                    loadWord(currentWordIndex);
+                }
+            }, 1000);
+        }
+
+        function speakLetter(letter) {
+            const utterance = new SpeechSynthesisUtterance(letter);
+            utterance.rate = 0.7;
+            synth.speak(utterance);
+        }
+
+        function speakWord(word) {
+            const utterance = new SpeechSynthesisUtterance(word);
+            utterance.rate = 0.8;
+            synth.speak(utterance);
+        }
+
+        // 初始化游戏
+        window.onload = initGame;
+    </script>
+</body>
+</html>
